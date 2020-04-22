@@ -1,0 +1,15 @@
+:root {
+  --background-color: #f7ffe9;
+  --block-margin-default: 20px;
+  --role-image-background: rgba(230, 233, 233, 0.3);
+  --role-image-padding: 10px;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+
+  background: var(--background-color);
+  font-family: "Roboto";
+}
