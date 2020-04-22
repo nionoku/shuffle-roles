@@ -1,12 +1,13 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { ConnectionStatus } from '@/models/ConnectionStatus'
-import Peer from 'peerjs'
 import { Role } from '@/models/Role'
+import Peer from 'peerjs'
+import { ConnectionEvent } from '@/models/ConnectionEvent'
 
 @Component
 export default class AppViewModel extends Vue {
   protected peer: Peer | null = null
-  protected connections = new Map<string, Peer.DataConnection>()
+  protected connections: Peer.DataConnection[] = []
   protected dataConnection: Peer.DataConnection | null = null
   protected isHost = false
   protected isClient = false
@@ -15,29 +16,26 @@ export default class AppViewModel extends Vue {
   }
 
   protected role: Role | null = null
-  // {
-  //   name: 'Агент',
-  //   link: 'https://sun9-15.userapi.com/_Tx6yKMfGeIrkfDEthBYyk7u1Wb-8tZCUgfaYA/wpZSPKj9ZVk.jpg'
-  // }
-
-  protected roles: Role[] | null = null
+  protected roles: Role[] = []
 
   protected mounted () {
     this.peer = new Peer()
 
     this.peer.on('connection', (peer) => {
-      setInterval(() => {
-        peer.send('Hello')
-      }, 500)
-
       peer.on('open', () => {
-        this.connections.set(peer.label, peer)
-        // TODO (2020.04.22): Inc clients count (or in 'connection' callback)
+        this.connections.push(peer)
       })
 
       peer.on('close', () => {
-        this.connections.delete(peer.label)
-        // TODO (2020.04.22): Dec clients count
+        const peerId = this.connections.findIndex(it => it.label === peer.label)
+        if (peerId > -1) {
+          this.connections.splice(peerId, 1)
+        }
+      })
+
+      peer.on('error', (err) => {
+        // TODO (2020.04.23): Add message 'Peer was disconnected'
+        console.log(err)
       })
     })
 
@@ -57,26 +55,79 @@ export default class AppViewModel extends Vue {
   }
 
   protected connect () {
-    this.isClient = true
+    try {
+      this.isClient = true
 
-    const peerId = prompt('Введите идентификатор пира', '')
+      const peerId = prompt('Введите идентификатор хоста', '')
 
-    if (peerId == null || peerId === '') {
+      if (peerId == null || peerId === '') {
+        throw new Error('Указанный идентификатор хоста недействителен')
+      }
+
+      if (this.peer && peerId) {
+        const connection = this.peer.connect(peerId)
+
+        connection.on('data', (data) => {
+          try {
+            const message = JSON.parse(data)
+
+            switch (message.event) {
+              case ConnectionEvent.SET_ROLE: {
+                if (!message.data) {
+                  throw new Error('Ошибка выдачи роли: от хоста поступило сообщение с пустой ролью')
+                }
+
+                this.role = message.data
+                break
+              }
+
+              default:
+                throw new Error('Неподдерживаемое событие')
+            }
+          } catch (err) {
+            alert(err.message)
+          }
+        })
+
+        connection.on('error', (err) => {
+          // TODO (2020.04.23): Add alert 'Invalid connection'
+          console.log(err)
+        })
+
+        connection.on('close', () => {
+          location.reload()
+        })
+      }
+    } catch (err) {
       this.isClient = false
-      // TODO (2020.04.22): throw error
-    }
-
-    if (this.peer && peerId) {
-      const connection = this.peer.connect(peerId)
-
-      connection.on('data', (data) => {
-        console.log(data)
-      })
+      alert(err.message)
     }
   }
 
-  protected shuffleAndTakeRoles () {
-    // TODO (2020.04.22): Shuffle and take roles
+  protected takeRoles () {
+    try {
+      if (this.roles.length < this.connections.length + 1) {
+        throw new Error('Количество ролей меньше, чем количество игроков')
+      }
+
+      const copyRoles = this.roles.slice()
+      copyRoles.sort(() => 0.5 - Math.random())
+
+      this.connections.forEach(it => {
+        it.send(JSON.stringify({
+          event: ConnectionEvent.SET_ROLE,
+          data: copyRoles.pop()
+        }))
+      })
+
+      this.role = copyRoles.pop() as Role
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  protected fillRoles () {
+    // TODO (2020.04.23): Fill roles list
   }
 
   protected get sessionId () {
@@ -84,7 +135,7 @@ export default class AppViewModel extends Vue {
   }
 
   protected get connectedUsersCount () {
-    return this.connections.size
+    return this.connections.length
   }
 
   protected get userRole () {
