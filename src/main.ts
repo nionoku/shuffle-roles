@@ -1,5 +1,7 @@
+import '@/assets/main.scss'
+
 import Vue from 'vue'
-import App from './App.vue'
+import App from '@/views/AppView.vue'
 
 Vue.config.productionTip = false
 
