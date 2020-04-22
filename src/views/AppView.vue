@@ -31,10 +31,11 @@
           <button
             v-if="!isClient"
             @click="serve"
+            :disabled="isHost"
           >Создать сервер</button>
           <button
             v-if="isHost"
-            @click="shuffleAndTakeRoles"
+            @click="takeRoles"
           >Выдать роли</button>
           <button
             v-if="!isHost"
