@@ -187,4 +187,9 @@ export default class AppViewModel extends Vue {
         return 'Подключиться'
     }
   }
+
+  protected get selectedFilename () {
+    // TODO (2020.04.23): Return selected roles filename
+    return 'Перетащите файл с ролями сюда'
+  }
 }
