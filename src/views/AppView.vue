@@ -1,18 +1,17 @@
 <template>
-  <div class="container">
-    <!-- For player -->
+  <div class="container flex-center">
     <div
-      class="container"
+      class="container flex-center"
       :class="{ 'user': isClient, 'host': isHost }"
     >
       <div
-        class="item"
+        class="item flex-center"
         v-show="isHost"
       >
         <span>Идентификатор сессии: {{ sessionId }}</span>
         <span>Подключено пользователей: {{ connectedUsersCount }}</span>
       </div>
-      <div class="item">
+      <div class="item flex-center">
         <div class="role">
           <span>Ваша роль</span>
           <div class="image-role-container">
@@ -46,27 +45,30 @@
         </div>
       </div>
       <div
-        class="item"
+        class="item flex-center"
         v-show="isHost"
       >
-        Выберите файл
-        <!-- Files selector -->
+        <div class="drop-zone flex-center">
+          <span class="filename">{{ selectedFilename }}</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.flex-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .container {
   width: 100%;
   height: 100%;
   max-width: 600px;
   margin: auto;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 
   &.user {
     > div:nth-child(1),
@@ -81,21 +83,17 @@
 
   &.host {
     > div:nth-child(1),
-    > div:nth-child(2) {
+    > div:nth-child(3) {
       flex: 0.5;
     }
 
-    > div:nth-child(3) {
+    > div:nth-child(2) {
       flex: 1;
     }
   }
 
   .item {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
 
     .logo {
       height: 12vh;
@@ -128,6 +126,14 @@
       button {
         margin: 0 5px;
       }
+    }
+
+    .drop-zone {
+      width: 90%;
+      height: 100%;
+      margin: 10px 0;
+      border: 2px dashed #a1a1a1;
+      border-radius: 20px;
     }
   }
 }
