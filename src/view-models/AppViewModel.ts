@@ -110,20 +110,49 @@ export default class AppViewModel extends Vue {
         throw new Error('Количество ролей меньше, чем количество игроков')
       }
 
-      const copyRoles = this.roles.slice()
-      copyRoles.sort(() => 0.5 - Math.random())
+      const shuffleRoles = this.shuffle(this.roles)
 
       this.connections.forEach(it => {
         it.send(JSON.stringify({
           event: ConnectionEvent.SET_ROLE,
-          data: copyRoles.pop()
+          data: shuffleRoles.pop()
         }))
       })
 
-      this.role = copyRoles.pop() as Role
+      this.role = shuffleRoles.pop() as Role
     } catch (err) {
       alert(err.message)
     }
+  }
+
+  protected shuffle (roles: Role[]): Role[] {
+    return this.riffleShuffle(roles)
+  }
+
+  protected riffleShuffle (roles: Role[]): Role[] {
+    const resultShuffle = roles.slice()
+
+    for (let shuffleRound = 0; shuffleRound < Math.round(Math.random() * 100); shuffleRound++) {
+      const leftHalt = resultShuffle.slice(0, Math.round(resultShuffle.length / 2))
+      const rightHalt = resultShuffle.slice(Math.round(resultShuffle.length / 2), resultShuffle.length)
+
+      resultShuffle.length = 0
+
+      while (leftHalt.length > 0 || rightHalt.length > 0) {
+        const leftCard = leftHalt.pop()
+        const rightCard = rightHalt.pop()
+
+        if (leftCard) {
+          resultShuffle.push(leftCard)
+        }
+
+        if (rightCard) {
+          resultShuffle.push(rightCard)
+        }
+      }
+    }
+
+    return resultShuffle
   }
 
   protected fillRoles () {
