@@ -3,6 +3,7 @@ import { ConnectionStatus } from '@/models/ConnectionStatus'
 import { Role } from '@/models/Role'
 import Peer from 'peerjs'
 import { ConnectionEvent } from '@/models/ConnectionEvent'
+import { JsonFileReader } from '@/utils/JsonFileReader'
 
 @Component
 export default class AppViewModel extends Vue {
@@ -16,6 +17,7 @@ export default class AppViewModel extends Vue {
   }
 
   protected role: Role | null = null
+  protected rolesFile: File | null = null
   protected roles: Role[] = []
 
   protected mounted () {
@@ -155,8 +157,20 @@ export default class AppViewModel extends Vue {
     return resultShuffle
   }
 
-  protected fillRoles () {
-    // TODO (2020.04.23): Fill roles list
+  protected async fillRoles (file: File) {
+    try {
+      if (file) {
+        this.rolesFile = file
+
+        this.roles = await JsonFileReader.readFile(file) as Array<Role>
+      }
+    } catch (err) {
+      alert(err)
+    }
+  }
+
+  protected dropHandler (event: any) {
+    this.fillRoles(event.dataTransfer.files[0])
   }
 
   protected get sessionId () {
@@ -190,6 +204,6 @@ export default class AppViewModel extends Vue {
 
   protected get selectedFilename () {
     // TODO (2020.04.23): Return selected roles filename
-    return 'Перетащите файл с ролями сюда'
+    return this.rolesFile ? this.rolesFile.name : 'Перетащите файл с ролями сюда'
   }
 }
