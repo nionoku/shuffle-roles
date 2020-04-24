@@ -48,7 +48,8 @@
         class="item flex-center"
         v-show="isHost"
       >
-        <div class="drop-zone flex-center">
+        <div class="drop-zone flex-center" @click="openFileDialog" @drop="dropHandler">
+          <input type="file" ref="fileDialog" id="file-dialog" @change="selectFileHandler">
           <span class="filename">{{ selectedFilename }}</span>
         </div>
       </div>
@@ -134,6 +135,10 @@
       margin: 10px 0;
       border: 2px dashed #a1a1a1;
       border-radius: 20px;
+
+      #file-dialog {
+        display: none;
+      }
     }
   }
 }

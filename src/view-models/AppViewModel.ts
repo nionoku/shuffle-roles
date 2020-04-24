@@ -17,8 +17,10 @@ export default class AppViewModel extends Vue {
   }
 
   protected role: Role | null = null
-  protected rolesFile: File | null = null
-  protected roles: Role[] = []
+  protected roles: { filename: string | null; content: Role[] } = {
+    filename: null,
+    content: []
+  }
 
   protected mounted () {
     this.peer = new Peer()
@@ -108,11 +110,11 @@ export default class AppViewModel extends Vue {
 
   protected takeRoles () {
     try {
-      if (this.roles.length < this.connections.length + 1) {
+      if (this.roles.content.length < this.connections.length + 1) {
         throw new Error('Количество ролей меньше, чем количество игроков')
       }
 
-      const shuffleRoles = this.shuffle(this.roles)
+      const shuffleRoles = this.shuffle(this.roles.content)
 
       this.connections.forEach(it => {
         it.send(JSON.stringify({
@@ -128,41 +130,14 @@ export default class AppViewModel extends Vue {
   }
 
   protected shuffle (roles: Role[]): Role[] {
-    return this.riffleShuffle(roles)
-  }
-
-  protected riffleShuffle (roles: Role[]): Role[] {
-    const resultShuffle = roles.slice()
-
-    for (let shuffleRound = 0; shuffleRound < Math.round(Math.random() * 100); shuffleRound++) {
-      const leftHalt = resultShuffle.slice(0, Math.round(resultShuffle.length / 2))
-      const rightHalt = resultShuffle.slice(Math.round(resultShuffle.length / 2), resultShuffle.length)
-
-      resultShuffle.length = 0
-
-      while (leftHalt.length > 0 || rightHalt.length > 0) {
-        const leftCard = leftHalt.pop()
-        const rightCard = rightHalt.pop()
-
-        if (leftCard) {
-          resultShuffle.push(leftCard)
-        }
-
-        if (rightCard) {
-          resultShuffle.push(rightCard)
-        }
-      }
-    }
-
-    return resultShuffle
+    return roles.slice().sort(() => 0.5 - Math.random())
   }
 
   protected async fillRoles (file: File) {
     try {
       if (file) {
-        this.rolesFile = file
-
-        this.roles = await JsonFileReader.readFile(file) as Array<Role>
+        this.roles.filename = file.name
+        this.roles.content = await JsonFileReader.readFile(file) as Array<Role>
       }
     } catch (err) {
       alert(err)
@@ -171,6 +146,17 @@ export default class AppViewModel extends Vue {
 
   protected dropHandler (event: any) {
     this.fillRoles(event.dataTransfer.files[0])
+  }
+
+  protected selectFileHandler (event: any) {
+    if (event.target.files && event.target.files.length > 0) {
+      this.fillRoles(event.target.files[0])
+    }
+  }
+
+  protected openFileDialog () {
+    const fileDialog = this.$refs.fileDialog as HTMLInputElement
+    fileDialog.click()
   }
 
   protected get sessionId () {
@@ -203,7 +189,6 @@ export default class AppViewModel extends Vue {
   }
 
   protected get selectedFilename () {
-    // TODO (2020.04.23): Return selected roles filename
-    return this.rolesFile ? this.rolesFile.name : 'Перетащите файл с ролями сюда'
+    return this.roles.filename ? this.roles.filename : 'Выберите файл с ролями'
   }
 }
